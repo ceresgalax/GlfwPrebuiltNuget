@@ -103,7 +103,7 @@ jobs:
           cp "artifacts/lib-macOS-12-x86_64/libglfw.dylib" "osx-x64/libglfw3.dylib"
           cp "artifacts/lib-macOS-12-arm64/libglfw.dylib" "osx-arm64/libglfw3.dylib"
           dotnet pack -c Release
-          cp "${GITHUB_WORKSPACE}/bin/Release"/GLFW.*.nupkg "${GITHUB_WORKSPACE}/bin/Release/GLFW.nupkg"
+          cp "${GITHUB_WORKSPACE}/bin/Release"/CeresGLFW-native.*.nupkg "${GITHUB_WORKSPACE}/bin/Release/CeresGLFW-native.nupkg"
 
       - name: Upload Package as Artifact
         uses: actions/upload-artifact@v3.1.1
@@ -111,5 +111,5 @@ jobs:
           # Artifact name
           name: 'nuget_package' # optional, default is artifact
           # A file, directory or wildcard pattern that describes what to upload
-          path: '${{ github.workspace }}/bin/Release/GLFW.nupkg'
+          path: '${{ github.workspace }}/bin/Release/CeresGLFW-native.nupkg'
           if-no-files-found: error

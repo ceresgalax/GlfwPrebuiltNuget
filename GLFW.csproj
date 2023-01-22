@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <Description>Just the binaries of GLFW</Description>
+        <RepositoryUrl>https://github.com/ceresgalax/GlfwPrebuiltNuget</RepositoryUrl>
+        <PackageVersion>3.3.8.0</PackageVersion>
+        <PackageId>CeresGLFW-native</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="osx-x64\libglfw3.dylib">
+            <PackagePath>runtimes/osx-x64/native/libglfw3.dylib</PackagePath>
+            <Pack>true</Pack>
+        </Content>
+        <Content Include="osx-arm64\libglfw3.dylib">
+            <PackagePath>runtimes/osx-arm64/native/libglfw3.dylib</PackagePath>
+            <Pack>true</Pack>
+        </Content>
+        <Content Include="win-x64\glfw3.dll">
+            <PackagePath>runtimes/win-x64/native/glfw3.dll</PackagePath>
+            <Pack>true</Pack>
+        </Content>
+
+        <Content Include="GLFW.targets">
+            <PackagePath>build/net45/</PackagePath>
+            <Pack>true</Pack>
+        </Content>
+
+    </ItemGroup>
+
+</Project>

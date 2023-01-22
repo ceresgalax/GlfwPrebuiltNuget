@@ -1,0 +1,115 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build-native:
+    # The type of runner that the job will run on
+    runs-on: ${{ matrix.os }} 
+    strategy:
+      matrix:
+        include:
+         - os: windows-latest
+           cmake_arch: 'default'
+         - os: macOS-12
+           cmake_arch: x86_64
+         - os: macOS-12
+           cmake_arch: arm64
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+  
+      # CMake is already installed on the GitHub hosted runners, so this step is disabled.
+#       - name: Install Packages
+#         # You may pin to the exact commit or the version.
+#         # uses: ConorMacBride/install-package@3e7ad059e07782ee54fa35f827df52aae0626f30
+#         uses: ConorMacBride/install-package@v1.1.0
+#         with:
+#           # Packages to install with brew on macOS
+#           brew: 'cmake'
+#           brew-cask: ''
+#           apt: 'cmake'
+#           choco: 'cmake'
+
+      # Runs a set of commands using the runners shell
+      - name: Build & Package
+        shell: bash
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+          mkdir build
+          cd build
+          cmake ../glfw "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_arch }}" -DBUILD_SHARED_LIBS=true -DCMAKE_RELEASE_TYPE=Release
+          cmake --build . --config Release -j
+          ls -R
+          
+      - name: Upload Binary as Artifact (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: 'lib-${{ matrix.os }}-${{ matrix.cmake_arch }}'
+          # A file, directory or wildcard pattern that describes what to upload
+          path: '${{ github.workspace }}/build/src/Release/glfw3.dll'
+          if-no-files-found: error
+          
+      - name: Upload Binary as Artifact (macOS)
+        if: ${{ matrix.os == 'macOS-12' }}
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: 'lib-${{ matrix.os }}-${{ matrix.cmake_arch }}'
+          # A file, directory or wildcard pattern that describes what to upload
+          path: '${{ github.workspace }}/build/src/libglfw.dylib'
+          if-no-files-found: error
+          
+  package:
+    name: Create NuGet Package
+    runs-on: [ubuntu-latest]
+    needs: build-native
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          submodules: false
+          
+      - name: Pull Artifacts
+        uses: actions/download-artifact@v3.0.1
+        with:
+          # Destination path
+          path: '${{ github.workspace }}/artifacts'
+      
+      # Runs a set of commands using the runners shell
+      - name: Package
+        shell: bash
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+          ls -R artifacts
+          cp "artifacts/lib-windows-latest-default/glfw3.dll" "win-x64/glfw3.dll"
+          cp "artifacts/lib-macOS-12-x86_64/libglfw.dylib" "osx-x64/libglfw3.dylib"
+          cp "artifacts/lib-macOS-12-arm64/libglfw.dylib" "osx-arm64/libglfw3.dylib"
+          dotnet pack -c Release
+          cp "${GITHUB_WORKSPACE}/bin/Release"/GLFW.*.nupkg "${GITHUB_WORKSPACE}/bin/Release/GLFW.nupkg"
+
+      - name: Upload Package as Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          # Artifact name
+          name: 'nuget_package' # optional, default is artifact
+          # A file, directory or wildcard pattern that describes what to upload
+          path: '${{ github.workspace }}/bin/Release/GLFW.nupkg'
+          if-no-files-found: error
